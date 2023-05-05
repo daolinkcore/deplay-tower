@@ -17,7 +17,6 @@ type Watcher struct {
     Id       ID                  // 地图唯一EntityID
     Value    any                 // 功能扩展字段
     Callback Callback            // 事件回调
-    tower    *ICoord             // 当前所在Tower坐标
     watching map[*Tower]struct{} // 已Watched的Tower列表（仅Watcher使用）
 }
 
@@ -28,6 +27,8 @@ type Callback interface {
 
     // OnEntityLeave 当Entity离开当前Tower坐标范围时，回调此函数
     OnEntityLeave(other *Entity)
+
+    //OnEntityChanged(other *Entity)
 }
 
 type Tower struct {

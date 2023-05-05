@@ -6,16 +6,16 @@ import (
 )
 
 type Options struct {
-    MapWidth    float64 // 地图宽度
-    MapHeight   float64 // 地图高度
-    TowerWidth  float64 // Tower宽度
-    TowerHeight float64 // Tower高度
+    MapWidth    float32 // 地图宽度
+    MapHeight   float32 // 地图高度
+    TowerWidth  float32 // Tower宽度
+    TowerHeight float32 // Tower高度
     Debug       bool
 }
 
 type Coord struct {
-    X float64
-    Y float64
+    X float32
+    Y float32
 }
 
 type ICoord struct {
@@ -36,8 +36,8 @@ func NewManager(options Options) *Manager {
 }
 
 func (m *Manager) Init() {
-    wSize := int(math.Ceil(m.opts.MapWidth / m.opts.TowerWidth))
-    hSize := int(math.Ceil(m.opts.MapHeight / m.opts.TowerHeight))
+    wSize := int(math.Ceil(float64(m.opts.MapWidth / m.opts.TowerWidth)))
+    hSize := int(math.Ceil(float64(m.opts.MapHeight / m.opts.TowerHeight)))
     m.max = ICoord{
         X: wSize - 1,
         Y: hSize - 1,
@@ -86,21 +86,21 @@ func (m *Manager) Remove(entity *Entity) bool {
 func (m *Manager) Update(entity *Entity, from, to Coord) bool {
     verifyEntity(entity)
     if !m.check(from) || !m.check(to) {
+        log.Println("ERROR: Tower manager update entity, coord INVALID, from=", from, "to=", to, "entity=", entity)
         return false
     }
     tc1 := m.convToTowerCoord(from)
     tc2 := m.convToTowerCoord(to)
-    if tc1.X == tc2.X && tc1.Y == tc2.Y {
-        return false
-    }
     if tc1.X > len(m.towers) || tc2.X > len(m.towers) {
         log.Println("ERROR: Tower manager update entity, old.pos=", from, "old.at=", tc1, "new.pos=", to, "new.at", tc2)
         return false
     }
-    oldTower := m.towers[tc1.X][tc1.Y]
-    newTower := m.towers[tc2.X][tc2.Y]
-    oldTower.remove(entity)
-    newTower.add(entity)
+    // Tower坐标没有发生切换
+    if tc1.X == tc2.X && tc1.Y == tc2.Y {
+        return false
+    }
+    m.towers[tc1.X][tc1.Y].remove(entity) // Old tower
+    m.towers[tc2.X][tc2.Y].add(entity)    // New tower
     return true
 }
 
@@ -169,8 +169,8 @@ func (m *Manager) coordRangeOf(pos ICoord, dist int, max ICoord) (start ICoord, 
 
 func (m *Manager) convToTowerCoord(pos Coord) ICoord {
     return ICoord{
-        X: int(math.Floor(pos.X / m.opts.TowerWidth)),
-        Y: int(math.Floor(pos.Y / m.opts.TowerHeight)),
+        X: int(math.Floor(float64(pos.X / m.opts.TowerWidth))),
+        Y: int(math.Floor(float64(pos.Y / m.opts.TowerHeight))),
     }
 }
 
