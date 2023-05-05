@@ -7,6 +7,13 @@ type (
 )
 
 type Entity struct {
+    Id       ID       // 地图唯一EntityID
+    Value    any      // 功能扩展字段
+    Callback Callback // 事件回调
+    tower    *ICoord  // 当前所在Tower坐标
+}
+
+type Watcher struct {
     Id       ID                  // 地图唯一EntityID
     Value    any                 // 功能扩展字段
     Callback Callback            // 事件回调
@@ -27,7 +34,7 @@ type Tower struct {
     debug    bool
     coord    ICoord // Tower坐标
     entities map[ID]*Entity
-    watchers map[ID]*Entity
+    watchers map[ID]*Watcher
 }
 
 func NewTower(coord ICoord, debug bool) *Tower {
@@ -35,7 +42,7 @@ func NewTower(coord ICoord, debug bool) *Tower {
         coord:    coord,
         debug:    debug,
         entities: make(map[ID]*Entity),
-        watchers: make(map[ID]*Entity),
+        watchers: make(map[ID]*Watcher),
     }
 }
 
@@ -48,15 +55,15 @@ func (t *Tower) add(entity *Entity) bool {
     if t.debug {
         log.Println("DEBUG: Tower(", t.coord, ") -> Add entity:", entity)
     }
-    t.foreachCallableEntity(func(callable *Entity) {
-        if callable != entity {
-            callable.Callback.OnEntityEnter(entity)
-        }
-    })
+    for _, watcher := range t.watchers {
+        watcher.Callback.OnEntityEnter(entity)
+    }
     for _, exists := range t.entities {
-        if exists != entity {
-            entity.Callback.OnEntityEnter(exists)
+        if exists == entity {
+            continue
         }
+        entity.Callback.OnEntityEnter(exists)
+        exists.Callback.OnEntityEnter(entity)
     }
     return true
 }
@@ -67,41 +74,28 @@ func (t *Tower) remove(entity *Entity) bool {
     }
     entity.tower = nil
     delete(t.entities, entity.Id)
-    t.foreachCallableEntity(func(callable *Entity) {
-        if callable != entity {
-            callable.Callback.OnEntityLeave(entity)
-        }
-    })
-    for _, exists := range t.entities {
-        if exists != entity {
-            entity.Callback.OnEntityLeave(exists)
-        }
+    for _, watcher := range t.watchers {
+        watcher.Callback.OnEntityLeave(entity)
+    }
+    for _, remain := range t.entities {
+        entity.Callback.OnEntityLeave(remain)
+        remain.Callback.OnEntityLeave(entity)
     }
     return true
 }
 
-func (t *Tower) foreachCallableEntity(callback func(node *Entity)) {
-    for _, entity := range t.entities {
-        callback(entity)
-    }
-    for _, watcher := range t.watchers {
-        callback(watcher)
-    }
-}
-
-func (t *Tower) addWatcher(watcher *Entity) {
+func (t *Tower) addWatcher(watcher *Watcher) {
     if _, ok := t.watchers[watcher.Id]; ok {
         return
     }
     t.watchers[watcher.Id] = watcher
-    // Link watching
     if watcher.watching == nil {
         watcher.watching = make(map[*Tower]struct{})
     }
     watcher.watching[t] = struct{}{}
 }
 
-func (t *Tower) removeWatcher(watcher *Entity) {
+func (t *Tower) removeWatcher(watcher *Watcher) {
     if _, ok := t.watchers[watcher.Id]; !ok {
         return
     }

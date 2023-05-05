@@ -58,7 +58,7 @@ func (m *Manager) Init() {
 // 此操作会触发OnEntityEnter函数回调
 // @return 仅当成功添加entity时返回True，否则返回False
 func (m *Manager) Add(entity *Entity, position Coord) bool {
-    verify(entity)
+    verifyEntity(entity)
     if !m.check(position) {
         log.Println("ERROR: Tower manager add entity, coord INVALID, position=", position.String(), "entity=", entity)
         return false
@@ -71,7 +71,7 @@ func (m *Manager) Add(entity *Entity, position Coord) bool {
 // 此操作会触发OnEntityLeave函数回调
 // @return 仅当成功删除entity时返回True，否则返回False
 func (m *Manager) Remove(entity *Entity) bool {
-    verify(entity)
+    verifyEntity(entity)
     if entity.tower != nil {
         p := *entity.tower
         return m.towers[p.X][p.Y].remove(entity)
@@ -84,7 +84,7 @@ func (m *Manager) Remove(entity *Entity) bool {
 // 此操作会触发OnEntityEnter和OnEntityLeave函数回调
 // @return 仅当成功更新entity时返回True，否则返回False
 func (m *Manager) Update(entity *Entity, from, to Coord) bool {
-    verify(entity)
+    verifyEntity(entity)
     if !m.check(from) || !m.check(to) {
         return false
     }
@@ -105,24 +105,24 @@ func (m *Manager) Update(entity *Entity, from, to Coord) bool {
 }
 
 // AddWatcher 从指定地图坐标位置，以及Tower距离，添加Watcher到范围内的Tower列表
-func (m *Manager) AddWatcher(watcher *Entity, position Coord, towerDistance int) {
-    verify(watcher)
+func (m *Manager) AddWatcher(watcher *Watcher, position Coord, towerDistance int) {
+    verifyWatcher(watcher)
     m.searchTowers(position, towerDistance, func(tower *Tower) {
         tower.addWatcher(watcher)
     })
 }
 
 // RemoveWatcher 从指定地图坐标位置，以及Tower距离，移除范围内Tower绑定的Watcher列表
-func (m *Manager) RemoveWatcher(watcher *Entity, position Coord, towerDistance int) {
-    verify(watcher)
+func (m *Manager) RemoveWatcher(watcher *Watcher, position Coord, towerDistance int) {
+    verifyWatcher(watcher)
     m.searchTowers(position, towerDistance, func(tower *Tower) {
         tower.removeWatcher(watcher)
     })
 }
 
 // ClearWatcher 清除指定Watcher全部绑定已绑定关系
-func (m *Manager) ClearWatcher(watcher *Entity) {
-    verify(watcher)
+func (m *Manager) ClearWatcher(watcher *Watcher) {
+    verifyWatcher(watcher)
     for tower := range watcher.watching {
         tower.removeWatcher(watcher)
     }
@@ -181,9 +181,15 @@ func (m *Manager) check(coord Coord) bool {
     return true
 }
 
-func verify(entity *Entity) {
+func verifyEntity(entity *Entity) {
     if entity.Callback == nil {
-        log.Fatalln("ERROR: Tower manager add entity, nil CALLBACK function, entity=", entity)
+        log.Fatalln("ERROR: Tower manager verify, nil CALLBACK function, entity=", entity)
+    }
+}
+
+func verifyWatcher(watcher *Watcher) {
+    if watcher.Callback == nil {
+        log.Fatalln("ERROR: Tower manager verify, nil CALLBACK function, watcher=", watcher)
     }
 }
 
