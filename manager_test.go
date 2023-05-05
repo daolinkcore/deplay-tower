@@ -24,6 +24,7 @@ func TestManagerEntity(t *testing.T) {
         },
     }
     E11Coord := Coord{X: 0, Y: 0}
+    log.Println("-> 11 add")
     assert.Equal(t, true, tw.Add(E11.Setup(), E11Coord))
 
     E22 := &TestEntity{
@@ -36,6 +37,7 @@ func TestManagerEntity(t *testing.T) {
         },
     }
     E22Coord := Coord{X: 5, Y: 5}
+    log.Println("-> 22 add")
     assert.Equal(t, true, tw.Add(E22.Setup(), E22Coord))
 
     E33 := &TestEntity{
@@ -48,6 +50,7 @@ func TestManagerEntity(t *testing.T) {
         },
     }
     E33Coord := Coord{X: 30, Y: 30}
+    log.Println("-> 33 add")
     assert.Equal(t, true, tw.Add(E33.Setup(), E33Coord))
 
     log.Println("-> 22 update")

@@ -23,6 +23,6 @@ func (o ICoord) String() string {
 
 func (o *Entity) String() string {
     return fmt.Sprintf(
-        "id: %v, type: %v, value: %+v", o.Id, o.Type, o.Value,
+        "id: %v, value: %+v", o.Id, o.Value,
     )
 }
