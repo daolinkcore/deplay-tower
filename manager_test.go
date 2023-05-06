@@ -176,7 +176,7 @@ func TestManagerWatcher(t *testing.T) {
 
 //// Entity
 
-var _ Callback = (*TestEntity)(nil)
+var _ EntityCallback = (*TestEntity)(nil)
 
 type TestEntity struct {
     *Entity
@@ -207,7 +207,7 @@ func (t *TestEntity) OnEntityLeave(other *Entity) {
 
 //// Watcher
 
-var _ Callback = (*TestWatcher)(nil)
+var _ WatcherCallback = (*TestWatcher)(nil)
 
 type TestWatcher struct {
     *Watcher
@@ -222,14 +222,14 @@ func (t *TestWatcher) Setup() *Watcher {
     return t.Watcher
 }
 
-func (t *TestWatcher) OnEntityEnter(other *Entity) {
+func (t *TestWatcher) OnWatchingEnter(other *Entity) {
     t.enters++
     if t.onEnterFunc != nil {
         t.onEnterFunc(other)
     }
 }
 
-func (t *TestWatcher) OnEntityLeave(other *Entity) {
+func (t *TestWatcher) OnWatchingLeave(other *Entity) {
     t.leaves++
     if t.onLeaveFunc != nil {
         t.onLeaveFunc(other)

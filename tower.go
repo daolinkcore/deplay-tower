@@ -7,28 +7,33 @@ type (
 )
 
 type Entity struct {
-    Id       ID       // 地图唯一EntityID
-    Value    any      // 功能扩展字段
-    Callback Callback // 事件回调
-    tower    *ICoord  // 当前所在Tower坐标
+    Id       ID             // 地图唯一EntityID
+    Value    any            // 功能扩展字段
+    Callback EntityCallback // 事件回调
+    tower    *ICoord        // 当前所在Tower坐标
 }
 
 type Watcher struct {
     Id       ID                  // 地图唯一EntityID
     Value    any                 // 功能扩展字段
-    Callback Callback            // 事件回调
+    Callback WatcherCallback     // 事件回调
     watching map[*Tower]struct{} // 已Watched的Tower列表（仅Watcher使用）
 }
 
-// Callback Entity进入退出回调接口
-type Callback interface {
-    // OnEntityEnter 当Entity进入当前Tower坐标范围时，回调此函数
+// EntityCallback 在同一个Tower坐标中，其它Entity进入和退出的回调接口
+type EntityCallback interface {
+    // OnEntityEnter 当Entity进入当前Tower坐标时，回调此函数
     OnEntityEnter(other *Entity)
-
-    // OnEntityLeave 当Entity离开当前Tower坐标范围时，回调此函数
+    // OnEntityLeave 当Entity离开当前Tower坐标时，回调此函数
     OnEntityLeave(other *Entity)
+}
 
-    //OnEntityChanged(other *Entity)
+// WatcherCallback 在Watcher范围内，任何Entity进入和退出的回调接口
+type WatcherCallback interface {
+    // OnWatchingEnter 当Entity进入当前Watch坐标范围时，回调此函数
+    OnWatchingEnter(other *Entity)
+    // OnWatchingLeave 当Entity离开当前Tower坐标范围时，回调此函数
+    OnWatchingLeave(other *Entity)
 }
 
 type Tower struct {
@@ -57,7 +62,7 @@ func (t *Tower) add(entity *Entity) bool {
         log.Println("DEBUG: Tower(", t.coord, ") -> Add entity:", entity)
     }
     for _, watcher := range t.watchers {
-        watcher.Callback.OnEntityEnter(entity)
+        watcher.Callback.OnWatchingEnter(entity)
     }
     for _, exists := range t.entities {
         if exists == entity {
@@ -76,7 +81,7 @@ func (t *Tower) remove(entity *Entity) bool {
     entity.tower = nil
     delete(t.entities, entity.Id)
     for _, watcher := range t.watchers {
-        watcher.Callback.OnEntityLeave(entity)
+        watcher.Callback.OnWatchingLeave(entity)
     }
     for _, remain := range t.entities {
         entity.Callback.OnEntityLeave(remain)

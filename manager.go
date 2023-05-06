@@ -54,6 +54,18 @@ func (m *Manager) Init() {
     }
 }
 
+func (m *Manager) Options() Options {
+    return m.opts
+}
+
+func (m *Manager) MaxCoord() ICoord {
+    return m.max
+}
+
+func (m *Manager) TowerCount() int {
+    return m.max.X * m.max.Y
+}
+
 // Add 在指定地图坐标位置添加Entity。
 //
 // 此操作会触发OnEntityEnter函数回调
