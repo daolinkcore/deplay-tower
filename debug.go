@@ -23,6 +23,12 @@ func (o ICoord) String() string {
 
 func (o *Entity) String() string {
     return fmt.Sprintf(
-        "id: %v, value: %+v", o.Id, o.Value,
+        "Entity(id: %v, value: %+v)", o.Id, o.Value,
+    )
+}
+
+func (o *Watcher) String() string {
+    return fmt.Sprintf(
+        "Watcher{id: %v, value: %+v}", o.Id, o.Value,
     )
 }

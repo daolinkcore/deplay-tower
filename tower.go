@@ -94,6 +94,9 @@ func (t *Tower) addWatcher(watcher *Watcher) {
         watcher.watching = make(map[*Tower]struct{})
     }
     watcher.watching[t] = struct{}{}
+    if t.debug {
+        log.Println("DEBUG: Tower(", t.coord, ") -> Add watcher:", watcher)
+    }
 }
 
 func (t *Tower) removeWatcher(watcher *Watcher) {
@@ -102,4 +105,7 @@ func (t *Tower) removeWatcher(watcher *Watcher) {
     }
     delete(t.watchers, watcher.Id)
     delete(watcher.watching, t)
+    if t.debug {
+        log.Println("DEBUG: Tower(", t.coord, ") -> Remove watcher:", watcher)
+    }
 }
