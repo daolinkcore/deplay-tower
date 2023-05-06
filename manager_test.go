@@ -14,61 +14,70 @@ func TestManagerEntity(t *testing.T) {
     })
     tw.Init()
 
-    E11 := &TestEntity{
-        Entity: &Entity{Id: 11},
-        OnEnterFunc: func(entity *Entity) {
-            log.Println("=> 11 receive ENTER, target:", entity)
-        },
-        OnLeaveFunc: func(entity *Entity) {
-            log.Println("=> 11 receive LEAVE, target:", entity)
-        },
+    TE11_ID := ID(11)
+    TE11 := &TestEntity{
+        Entity:      &Entity{Id: TE11_ID},
+        onEnterFunc: newLogEnterFunc(TE11_ID),
+        onLeaveFunc: newLogLeaveFunc(TE11_ID),
     }
-    E11Coord := Coord{X: 0, Y: 0}
-    log.Println("-> 11 add")
-    assert.Equal(t, true, tw.Add(E11.Setup(), E11Coord))
+    TE11Coord := Coord{X: 0, Y: 0}
+    log.Println("-> Entity Add: ", TE11_ID)
+    assert.Equal(t, true, tw.Add(TE11.Setup(), TE11Coord))
+    assert.Equal(t, 0, TE11.enters)
+    assert.Equal(t, 0, TE11.leaves)
 
-    E22 := &TestEntity{
-        Entity: &Entity{Id: 22},
-        OnEnterFunc: func(entity *Entity) {
-            log.Println("=> 22 receive ENTER, target:", entity)
-        },
-        OnLeaveFunc: func(entity *Entity) {
-            log.Println("=> 22 receive LEAVE, target:", entity)
-        },
+    TE22_ID := ID(22)
+    TE22 := &TestEntity{
+        Entity:      &Entity{Id: TE22_ID},
+        onEnterFunc: newLogEnterFunc(TE22_ID),
+        onLeaveFunc: newLogLeaveFunc(TE22_ID),
     }
-    E22Coord := Coord{X: 5, Y: 5}
-    log.Println("-> 22 add")
-    assert.Equal(t, true, tw.Add(E22.Setup(), E22Coord))
+    TE22Coord := Coord{X: 5, Y: 5}
+    log.Println("-> Entity Add: ", TE22_ID)
+    assert.Equal(t, true, tw.Add(TE22.Setup(), TE22Coord))
+    assert.Equal(t, 1, TE11.enters)
+    assert.Equal(t, 0, TE11.leaves)
+    assert.Equal(t, 1, TE22.enters)
+    assert.Equal(t, 0, TE22.leaves)
+    assert.Equal(t, TE22.enters, TE11.enters)
+    assert.Equal(t, TE22.leaves, TE11.leaves)
 
-    E33 := &TestEntity{
-        Entity: &Entity{Id: 33},
-        OnEnterFunc: func(entity *Entity) {
-            log.Println("=> 33 receive ENTER, target:", entity)
-        },
-        OnLeaveFunc: func(entity *Entity) {
-            log.Println("=> 33 receive LEAVE, target:", entity)
-        },
+    TE33_ID := ID(33)
+    TE33 := &TestEntity{
+        Entity:      &Entity{Id: TE33_ID},
+        onEnterFunc: newLogEnterFunc(TE33_ID),
+        onLeaveFunc: newLogLeaveFunc(TE33_ID),
     }
     E33Coord := Coord{X: 30, Y: 30}
-    log.Println("-> 33 add")
-    assert.Equal(t, true, tw.Add(E33.Setup(), E33Coord))
+    log.Println("-> Entity Add: ", TE33_ID)
+    assert.Equal(t, true, tw.Add(TE33.Setup(), E33Coord))
+    assert.Equal(t, 0, TE33.enters)
+    assert.Equal(t, 0, TE33.leaves)
+    //
+    log.Println("-> Entity Update: ", TE22_ID)
+    tw.Update(TE22.Setup(), TE22Coord, E33Coord)
+    assert.Equal(t, 1, TE33.enters)
+    assert.Equal(t, 1, TE22.leaves)
+    assert.Equal(t, 1, TE11.leaves)
 
-    log.Println("-> 22 update")
-    tw.Update(E22.Setup(), E22Coord, E33Coord)
+    log.Println("-> Entity Update: ", TE22_ID)
+    tw.Update(TE22.Setup(), E33Coord, TE11Coord)
+    assert.Equal(t, 1, TE33.leaves)
+    assert.Equal(t, 2, TE11.enters)
 
-    log.Println("-> 22 update")
-    tw.Update(E22.Setup(), E33Coord, E11Coord)
-
-    log.Println("-> 22 remove")
-    tw.Remove(E22.Setup())
+    log.Println("-> Entity Remove: ", TE22_ID)
+    tw.Remove(TE22.Setup())
+    assert.Equal(t, 2, TE11.leaves)
 }
 
 var _ Callback = (*TestEntity)(nil)
 
 type TestEntity struct {
     *Entity
-    OnEnterFunc func(entity *Entity)
-    OnLeaveFunc func(entity *Entity)
+    enters      int
+    leaves      int
+    onEnterFunc func(entity *Entity)
+    onLeaveFunc func(entity *Entity)
 }
 
 func (t *TestEntity) Setup() *Entity {
@@ -77,13 +86,27 @@ func (t *TestEntity) Setup() *Entity {
 }
 
 func (t *TestEntity) OnEntityEnter(other *Entity) {
-    if t.OnEnterFunc != nil {
-        t.OnEnterFunc(other)
+    t.enters++
+    if t.onEnterFunc != nil {
+        t.onEnterFunc(other)
     }
 }
 
 func (t *TestEntity) OnEntityLeave(other *Entity) {
-    if t.OnLeaveFunc != nil {
-        t.OnLeaveFunc(other)
+    t.leaves++
+    if t.onLeaveFunc != nil {
+        t.onLeaveFunc(other)
+    }
+}
+
+func newLogEnterFunc(id ID) func(entity *Entity) {
+    return func(entity *Entity) {
+        log.Printf("=> %d receive ENTER, target: %+v\n", id, entity)
+    }
+}
+
+func newLogLeaveFunc(id ID) func(entity *Entity) {
+    return func(entity *Entity) {
+        log.Printf("=> %d receive LEAVE, target: %+v\n", id, entity)
     }
 }
