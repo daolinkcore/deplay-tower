@@ -20,7 +20,7 @@ func TestManagerEntity(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE11_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE11_ID),
     }
-    TE11Coord := Coord{X: 0, Y: 0}
+    TE11Coord := Position{X: 0, Y: 0}
     log.Println("-> Entity Add: ", TE11_ID)
     assert.Equal(t, true, tw.Add(TE11.Setup(), TE11Coord))
     assert.Equal(t, 0, TE11.enters)
@@ -32,7 +32,7 @@ func TestManagerEntity(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE22_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE22_ID),
     }
-    TE22Coord := Coord{X: 5, Y: 5}
+    TE22Coord := Position{X: 5, Y: 5}
     log.Println("-> Entity Add: ", TE22_ID)
     assert.Equal(t, true, tw.Add(TE22.Setup(), TE22Coord))
     assert.Equal(t, 1, TE11.enters)
@@ -48,7 +48,7 @@ func TestManagerEntity(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE33_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE33_ID),
     }
-    E33Coord := Coord{X: 30, Y: 30}
+    E33Coord := Position{X: 30, Y: 30}
     log.Println("-> Entity Add: ", TE33_ID)
     assert.Equal(t, true, tw.Add(TE33.Setup(), E33Coord))
     assert.Equal(t, 0, TE33.enters)
@@ -83,7 +83,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TWMAP_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TWMAP_ID),
     }
-    TWMAPCoord := Coord{X: 50, Y: 50}
+    TWMAPCoord := Position{X: 50, Y: 50}
     log.Println("-> Watcher Add: ", TWMAP_ID)
     tw.AddWatcher(TWMAP.Setup(), TWMAPCoord, 10)
 
@@ -93,7 +93,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TWCenter_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TWCenter_ID),
     }
-    TWCenterCoord := Coord{X: 50, Y: 50}
+    TWCenterCoord := Position{X: 50, Y: 50}
     log.Println("-> Watcher Add: ", TWCenter_ID)
     tw.AddWatcher(TWCenter.Setup(), TWCenterCoord, 1)
 
@@ -103,7 +103,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE11_ID),
         onLeaveFunc: newLogLeaveFunc("Entity", TE11_ID),
     }
-    TE11Coord := Coord{X: 0, Y: 0}
+    TE11Coord := Position{X: 0, Y: 0}
     log.Println("-> Entity Add: ", TE11_ID)
     assert.Equal(t, true, tw.Add(TE11.Setup(), TE11Coord))
     assert.Equal(t, 1, TWMAP.enters)
@@ -115,7 +115,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE22_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE22_ID),
     }
-    E22Coord := Coord{X: 30, Y: 30}
+    E22Coord := Position{X: 30, Y: 30}
     log.Println("-> Entity Add: ", TE22_ID)
     assert.Equal(t, true, tw.Add(TE22.Setup(), E22Coord))
     assert.Equal(t, 2, TWMAP.enters)
@@ -127,7 +127,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE33_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE33_ID),
     }
-    E33Coord := Coord{X: 40, Y: 40}
+    E33Coord := Position{X: 40, Y: 40}
     log.Println("-> Entity Add: ", TE33_ID)
     assert.Equal(t, true, tw.Add(TE33.Setup(), E33Coord))
     assert.Equal(t, 3, TWMAP.enters)
@@ -147,7 +147,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE44_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE44_ID),
     }
-    E44Coord := Coord{X: 40, Y: 40}
+    E44Coord := Position{X: 40, Y: 40}
     log.Println("-> Entity Add: ", TE44_ID)
     assert.Equal(t, true, tw.Add(TE44.Setup(), E44Coord))
     assert.Equal(t, 3, TWMAP.enters)
@@ -163,7 +163,7 @@ func TestManagerWatcher(t *testing.T) {
         onEnterFunc: newLogEnterFunc("Watcher", TE55_ID),
         onLeaveFunc: newLogLeaveFunc("Watcher", TE55_ID),
     }
-    E55Coord := Coord{X: 40, Y: 40}
+    E55Coord := Position{X: 40, Y: 40}
     log.Println("-> Entity Add: ", TE55_ID)
     assert.Equal(t, true, tw.Add(TE55.Setup(), E55Coord))
     assert.Equal(t, 3, TWMAP.enters)
@@ -176,7 +176,7 @@ func TestManagerWatcher(t *testing.T) {
 
 //// Entity
 
-var _ EntityCallback = (*TestEntity)(nil)
+var _ TowerCallback = (*TestEntity)(nil)
 
 type TestEntity struct {
     *Entity

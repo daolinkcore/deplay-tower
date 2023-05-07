@@ -13,12 +13,12 @@ type Options struct {
     Debug       bool
 }
 
-type Coord struct {
+type Position struct {
     X float32
     Y float32
 }
 
-type ICoord struct {
+type coord struct {
     X int
     Y int
 }
@@ -26,7 +26,7 @@ type ICoord struct {
 type Manager struct {
     opts   Options
     towers [][]*Tower
-    max    ICoord
+    max    coord
 }
 
 func NewManager(options Options) *Manager {
@@ -38,7 +38,7 @@ func NewManager(options Options) *Manager {
 func (m *Manager) Init() {
     wSize := int(math.Ceil(float64(m.opts.MapWidth / m.opts.TowerWidth)))
     hSize := int(math.Ceil(float64(m.opts.MapHeight / m.opts.TowerHeight)))
-    m.max = ICoord{
+    m.max = coord{
         X: wSize - 1,
         Y: hSize - 1,
     }
@@ -46,7 +46,7 @@ func (m *Manager) Init() {
     for i := 0; i < wSize; i++ {
         m.towers[i] = make([]*Tower, hSize)
         for j := 0; j < hSize; j++ {
-            m.towers[i][j] = NewTower(ICoord{X: i, Y: j}, m.opts.Debug)
+            m.towers[i][j] = NewTower(coord{X: i, Y: j}, m.opts.Debug)
         }
     }
     if m.opts.Debug {
@@ -58,7 +58,7 @@ func (m *Manager) Options() Options {
     return m.opts
 }
 
-func (m *Manager) MaxCoord() ICoord {
+func (m *Manager) MaxCoord() coord {
     return m.max
 }
 
@@ -71,7 +71,7 @@ func (m *Manager) TowerCount() int {
 // 此操作会触发OnEntityEnter函数回调
 //
 // @return 仅当成功添加entity时返回True，否则返回False
-func (m *Manager) Add(entity *Entity, position Coord) bool {
+func (m *Manager) Add(entity *Entity, position Position) bool {
     verifyEntity(entity)
     if !m.check(position) {
         log.Println("ERROR: Tower manager add entity, coord INVALID, position=", position.String(), "entity=", entity)
@@ -100,7 +100,7 @@ func (m *Manager) Remove(entity *Entity) bool {
 // 此操作会触发OnEntityEnter和OnEntityLeave函数回调
 //
 // @return 仅当成功更新entity时返回True，否则返回False
-func (m *Manager) Update(entity *Entity, from, to Coord) bool {
+func (m *Manager) Update(entity *Entity, from, to Position) bool {
     verifyEntity(entity)
     if !m.check(from) || !m.check(to) {
         log.Println("ERROR: Tower manager update entity, coord INVALID, from=", from, "to=", to, "entity=", entity)
@@ -117,24 +117,60 @@ func (m *Manager) Update(entity *Entity, from, to Coord) bool {
         return false
     }
     m.towers[prevCoord.X][prevCoord.Y].remove(entity) // Prev tower
-    m.towers[nextCoord.X][nextCoord.Y].add(entity)    // Next tower
+    m.towers[nextCoord.X][nextCoord.Y].add(entity)    // New tower
     return true
 }
 
+// Search 从指定地图坐标位置，以及Tower距离，查找范围内的Entity列表
+func (m *Manager) Search(position Position, distance int) []*Entity {
+    if !m.check(position) {
+        log.Println("ERROR: Tower manager search entity, coord INVALID, position=", position)
+        return nil
+    }
+    output := make([]*Entity, 0)
+    m.searchTowers(position, distance, func(tower *Tower) {
+        for _, entity := range tower.entities {
+            output = append(output, entity)
+        }
+    })
+    return output
+}
+
 // AddWatcher 从指定地图坐标位置，以及Tower距离，添加Watcher到范围内的Tower列表
-func (m *Manager) AddWatcher(watcher *Watcher, position Coord, towerDistance int) {
+func (m *Manager) AddWatcher(watcher *Watcher, position Position, distance int) {
     verifyWatcher(watcher)
-    m.searchTowers(position, towerDistance, func(tower *Tower) {
+    m.searchTowers(position, distance, func(tower *Tower) {
         tower.addWatcher(watcher)
     })
 }
 
 // RemoveWatcher 从指定地图坐标位置，以及Tower距离，移除范围内Tower绑定的Watcher列表
-func (m *Manager) RemoveWatcher(watcher *Watcher, position Coord, towerDistance int) {
+func (m *Manager) RemoveWatcher(watcher *Watcher, position Position, distance int) {
     verifyWatcher(watcher)
-    m.searchTowers(position, towerDistance, func(tower *Tower) {
+    m.searchTowers(position, distance, func(tower *Tower) {
         tower.removeWatcher(watcher)
     })
+}
+
+func (m *Manager) UpdateWatcher(watcher *Watcher, from Position, to Position, prevDist, newDist int) {
+    verifyWatcher(watcher)
+    if !m.check(from) || !m.check(to) {
+        log.Println("ERROR: Tower manager update watcher, coord INVALID, from=", from, "to=", to, "watcher=", watcher)
+        return
+    }
+    prevCoord := m.convToTowerCoord(from)
+    newCoord := m.convToTowerCoord(to)
+    // 没有发生变化
+    if prevCoord.X == newCoord.X && prevCoord.Y == newCoord.Y && prevDist == newDist {
+        return
+    }
+    removed, added := m.getChangedTowers(prevCoord, newCoord, prevDist, newDist, m.towers, m.max)
+    for _, tower := range added {
+        tower.addWatcher(watcher)
+    }
+    for _, tower := range removed {
+        tower.removeWatcher(watcher)
+    }
 }
 
 // ClearWatcher 清除指定Watcher全部绑定已绑定关系
@@ -145,9 +181,9 @@ func (m *Manager) ClearWatcher(watcher *Watcher) {
     }
 }
 
-func (m *Manager) searchTowers(position Coord, dist int, onTower func(tower *Tower)) {
+func (m *Manager) searchTowers(position Position, dist int, onTower func(tower *Tower)) {
     ip := m.convToTowerCoord(position)
-    start, end := m.coordRangeOf(ip, dist, m.max)
+    start, end := coordRangeOf(ip, dist, m.max)
     for x := start.X; x <= end.X; x++ {
         for y := start.Y; y <= end.Y; y++ {
             onTower(m.towers[x][y])
@@ -155,7 +191,41 @@ func (m *Manager) searchTowers(position Coord, dist int, onTower func(tower *Tow
     }
 }
 
-func (m *Manager) coordRangeOf(coord ICoord, dist int, max ICoord) (start ICoord, end ICoord) {
+func (*Manager) getChangedTowers(prevCoord, newCoord coord, prevDist, newDist int, towers [][]*Tower, max coord) (added []*Tower, remove []*Tower) {
+    prevStart, prevEnd := coordRangeOf(prevCoord, prevDist, max)
+    newStart, newEnd := coordRangeOf(newCoord, newDist, max)
+    for x := prevStart.X; x <= prevEnd.X; x++ {
+        for y := prevStart.Y; y <= prevEnd.Y; y++ {
+            if !isInRange(coord{X: x, Y: y}, newStart, newEnd) {
+                remove = append(remove, towers[x][y])
+            }
+        }
+    }
+    for x := newStart.X; x <= newEnd.X; x++ {
+        for y := newStart.Y; y <= newEnd.Y; y++ {
+            if !isInRange(coord{X: x, Y: y}, prevStart, prevEnd) {
+                added = append(added, towers[x][y])
+            }
+        }
+    }
+    return
+}
+
+func (m *Manager) convToTowerCoord(pos Position) coord {
+    return coord{
+        X: int(math.Floor(float64(pos.X / m.opts.TowerWidth))),
+        Y: int(math.Floor(float64(pos.Y / m.opts.TowerHeight))),
+    }
+}
+
+func (m *Manager) check(coord Position) bool {
+    if coord.X < 0 || coord.Y < 0 || coord.X >= m.opts.MapWidth || coord.Y >= m.opts.MapHeight {
+        return false
+    }
+    return true
+}
+
+func coordRangeOf(coord coord, dist int, max coord) (start coord, end coord) {
     if coord.X-dist < 0 {
         start.X = 0
         end.X = 2 * dist
@@ -184,18 +254,8 @@ func (m *Manager) coordRangeOf(coord ICoord, dist int, max ICoord) (start ICoord
     return
 }
 
-func (m *Manager) convToTowerCoord(pos Coord) ICoord {
-    return ICoord{
-        X: int(math.Floor(float64(pos.X / m.opts.TowerWidth))),
-        Y: int(math.Floor(float64(pos.Y / m.opts.TowerHeight))),
-    }
-}
-
-func (m *Manager) check(coord Coord) bool {
-    if coord.X < 0 || coord.Y < 0 || coord.X >= m.opts.MapWidth || coord.Y >= m.opts.MapHeight {
-        return false
-    }
-    return true
+func isInRange(pos, start, end coord) bool {
+    return pos.X >= start.X && pos.X <= end.X && pos.Y >= start.Y && pos.Y <= end.Y
 }
 
 func verifyEntity(entity *Entity) {

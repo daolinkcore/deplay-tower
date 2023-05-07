@@ -4,18 +4,18 @@ import "fmt"
 
 func (o Options) String() string {
     return fmt.Sprintf(
-        "width: %.2f, height: %.2f, tower.w: %.2f, tower.h: %.2f",
+        "Opitons{width: %.2f, height: %.2f, tower.w: %.2f, tower.h: %.2f}",
         o.MapWidth, o.MapHeight, o.TowerWidth, o.TowerHeight,
     )
 }
 
-func (o Coord) String() string {
+func (o Position) String() string {
     return fmt.Sprintf(
-        "x: %.2f, y: %.2f", o.X, o.Y,
+        "Position{x: %.2f, y: %.2f}", o.X, o.Y,
     )
 }
 
-func (o ICoord) String() string {
+func (o coord) String() string {
     return fmt.Sprintf(
         "x: %d, y: %d", o.X, o.Y,
     )
@@ -23,7 +23,7 @@ func (o ICoord) String() string {
 
 func (o *Entity) String() string {
     return fmt.Sprintf(
-        "Entity(id: %v, value: %+v)", o.Id, o.Value,
+        "Entity{id: %v, value: %+v}", o.Id, o.Value,
     )
 }
 

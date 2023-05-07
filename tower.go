@@ -7,10 +7,10 @@ type (
 )
 
 type Entity struct {
-    Id       ID             // 地图唯一EntityID
-    Value    any            // 功能扩展字段
-    Callback EntityCallback // 事件回调
-    tower    *ICoord        // 当前所在Tower坐标
+    Id       ID            // 地图唯一EntityID
+    Value    any           // 功能扩展字段
+    Callback TowerCallback // 事件回调
+    tower    *coord        // 当前所在Tower坐标
 }
 
 type Watcher struct {
@@ -20,8 +20,8 @@ type Watcher struct {
     watching map[*Tower]struct{} // 已Watched的Tower列表（仅Watcher使用）
 }
 
-// EntityCallback 在同一个Tower坐标中，其它Entity进入和退出的回调接口
-type EntityCallback interface {
+// TowerCallback 在同一个Tower坐标中，其它Entity进入和退出的回调接口
+type TowerCallback interface {
     // OnEntityEnter 当Entity进入当前Tower坐标时，回调此函数
     OnEntityEnter(other *Entity)
     // OnEntityLeave 当Entity离开当前Tower坐标时，回调此函数
@@ -38,12 +38,12 @@ type WatcherCallback interface {
 
 type Tower struct {
     debug    bool
-    coord    ICoord // Tower坐标
+    coord    coord // Tower坐标
     entities map[ID]*Entity
     watchers map[ID]*Watcher
 }
 
-func NewTower(coord ICoord, debug bool) *Tower {
+func NewTower(coord coord, debug bool) *Tower {
     return &Tower{
         coord:    coord,
         debug:    debug,
@@ -59,7 +59,7 @@ func (t *Tower) add(entity *Entity) bool {
     t.entities[entity.Id] = entity
     entity.tower = &t.coord
     if t.debug {
-        log.Println("DEBUG: Tower(", t.coord, ") -> Add entity:", entity)
+        log.Println("DEBUG: Tower(", t.coord, ") -> ADD:", entity, "watchers:", len(t.watchers), "entities(+1):", len(t.entities))
     }
     for _, watcher := range t.watchers {
         watcher.Callback.OnWatchingEnter(entity)
@@ -80,6 +80,9 @@ func (t *Tower) remove(entity *Entity) bool {
     }
     entity.tower = nil
     delete(t.entities, entity.Id)
+    if t.debug {
+        log.Println("DEBUG: Tower(", t.coord, ") -> REMOVE:", entity, "watchers:", len(t.watchers), "entities(-1):", len(t.entities))
+    }
     for _, watcher := range t.watchers {
         watcher.Callback.OnWatchingLeave(entity)
     }
@@ -100,7 +103,7 @@ func (t *Tower) addWatcher(watcher *Watcher) {
     }
     watcher.watching[t] = struct{}{}
     if t.debug {
-        log.Println("DEBUG: Tower(", t.coord, ") -> Add watcher:", watcher)
+        log.Println("DEBUG: Tower(", t.coord, ") -> ADD watcher:", watcher, "watchers(+1):", len(t.watchers), "entities:", len(t.entities))
     }
 }
 
@@ -111,6 +114,6 @@ func (t *Tower) removeWatcher(watcher *Watcher) {
     delete(t.watchers, watcher.Id)
     delete(watcher.watching, t)
     if t.debug {
-        log.Println("DEBUG: Tower(", t.coord, ") -> Remove watcher:", watcher)
+        log.Println("DEBUG: Tower(", t.coord, ") -> REMOVE watcher:", watcher, "watchers(-1):", len(t.watchers), "entities:", len(t.entities))
     }
 }
