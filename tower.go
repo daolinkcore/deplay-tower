@@ -7,25 +7,32 @@ type (
 )
 
 type Entity struct {
-    Id       ID             // 地图唯一EntityID
+    Id       ID             // EntityID，需要确保地图范围内唯一性
     Value    any            // 功能扩展字段
     Callback EntityCallback // 事件回调
     tower    *ICoord        // 当前所在Tower坐标
 }
 
 type Watcher struct {
-    Id       ID                  // 地图唯一EntityID
+    Id       ID                  // EntityID，需要确保地图范围内唯一性。与EntityID可共存，不存在互斥关系。
     Value    any                 // 功能扩展字段
     Callback WatcherCallback     // 事件回调
-    watching map[*Tower]struct{} // 已Watched的Tower列表（仅Watcher使用）
+    watching map[*Tower]struct{} // 已关联Watched的Tower列表
 }
 
 // EntityCallback 在同一个Tower坐标中，其它Entity进入和退出的回调接口
 type EntityCallback interface {
-    // OnEntityEnter 当Entity进入当前Tower坐标时，回调此函数
+    // OnEntityEnter 当Entity进入当前Tower坐标时，回调此函数。
+    //
+    // @param other *Entity 当前Tower坐标中其它的Entity
     OnEntityEnter(other *Entity)
-    // OnEntityLeave 当Entity离开当前Tower坐标时，回调此函数
-    OnEntityLeave(other *Entity)
+
+    // OnEntityLeave 当Entity离开当前Tower坐标时，回调此函数。
+    //
+    // @param other *Entity 当前Tower坐标中其它的Entity。有以下两种情况：
+    //  1. 当前Entity为主动触发离开的，参数Entity为当前Tower坐标的存留的其它Entity。
+    //  2. 当前Tower坐标的存留的其它Entity，参数Entity为触发离开的Entity。
+    OnEntityLeave(entity *Entity)
 }
 
 // WatcherCallback 在Watcher范围内，任何Entity进入和退出的回调接口

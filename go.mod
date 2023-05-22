@@ -1,4 +1,4 @@
-module github.com/daolinkcore/degame-tower
+module github.com/daolinkcore/deplay-tower
 
 go 1.20
 

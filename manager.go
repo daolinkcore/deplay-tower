@@ -6,11 +6,11 @@ import (
 )
 
 type Options struct {
-    MapWidth    float32 // 地图宽度
-    MapHeight   float32 // 地图高度
-    TowerWidth  float32 // Tower宽度
-    TowerHeight float32 // Tower高度
-    Debug       bool
+    MapWidth    float32 // width of map in pixel
+    MapHeight   float32 // height of map in pixel
+    TowerWidth  float32 // width of tower in pixel
+    TowerHeight float32 // height of tower in pixel
+    Debug       bool    // Is debug
 }
 
 type Coord struct {
@@ -36,21 +36,21 @@ func NewManager(options Options) *Manager {
 }
 
 func (m *Manager) Init() {
-    wSize := int(math.Ceil(float64(m.opts.MapWidth / m.opts.TowerWidth)))
-    hSize := int(math.Ceil(float64(m.opts.MapHeight / m.opts.TowerHeight)))
+    towerSizeX := int(math.Ceil(float64(m.opts.MapWidth / m.opts.TowerWidth)))
+    towerSizeY := int(math.Ceil(float64(m.opts.MapHeight / m.opts.TowerHeight)))
     m.max = ICoord{
-        X: wSize - 1,
-        Y: hSize - 1,
+        X: towerSizeX - 1,
+        Y: towerSizeY - 1,
     }
-    m.towers = make([][]*Tower, wSize)
-    for i := 0; i < wSize; i++ {
-        m.towers[i] = make([]*Tower, hSize)
-        for j := 0; j < hSize; j++ {
-            m.towers[i][j] = NewTower(ICoord{X: i, Y: j}, m.opts.Debug)
+    m.towers = make([][]*Tower, towerSizeX)
+    for x := 0; x < towerSizeX; x++ {
+        m.towers[x] = make([]*Tower, towerSizeY)
+        for y := 0; y < towerSizeY; y++ {
+            m.towers[x][y] = NewTower(ICoord{X: x, Y: y}, m.opts.Debug)
         }
     }
     if m.opts.Debug {
-        log.Println("INFO: Tower manager init, options=", m.opts, "max=", m.max, "towers=", wSize*hSize)
+        log.Println("INFO: Tower manager init, options=", m.opts, "max=", m.max, "towers=", towerSizeX*towerSizeY)
     }
 }
 
@@ -66,7 +66,7 @@ func (m *Manager) TowerCount() int {
     return m.max.X * m.max.Y
 }
 
-// Add 在指定地图坐标位置添加Entity。
+// Add 在指定地图像素坐标的位置添加一个Entity。
 //
 // 此操作会触发OnEntityEnter函数回调
 //
@@ -81,7 +81,7 @@ func (m *Manager) Add(entity *Entity, position Coord) bool {
     return m.towers[coord.X][coord.Y].add(entity)
 }
 
-// Remove 从指定地图坐标位置移除Entity
+// Remove 从指定地图像素坐标位置移除Entity
 //
 // 此操作会触发OnEntityLeave函数回调
 //
@@ -95,7 +95,7 @@ func (m *Manager) Remove(entity *Entity) bool {
     return m.towers[coord.X][coord.Y].remove(entity)
 }
 
-// Update 将Entity从指定地图坐标位置移动到新坐标位置。
+// Update 将Entity从指定地图像素坐标位置移动到新的像素坐标位置。
 //
 // 此操作会触发OnEntityEnter和OnEntityLeave函数回调
 //
@@ -121,7 +121,7 @@ func (m *Manager) Update(entity *Entity, from, to Coord) bool {
     return true
 }
 
-// AddWatcher 从指定地图坐标位置，以及Tower距离，添加Watcher到范围内的Tower列表
+// AddWatcher 从指定地图像素坐标位置，以及Tower距离，将Watcher添加到范围内的Tower列表
 func (m *Manager) AddWatcher(watcher *Watcher, position Coord, towerDistance int) {
     verifyWatcher(watcher)
     m.searchTowers(position, towerDistance, func(tower *Tower) {
@@ -129,7 +129,7 @@ func (m *Manager) AddWatcher(watcher *Watcher, position Coord, towerDistance int
     })
 }
 
-// RemoveWatcher 从指定地图坐标位置，以及Tower距离，移除范围内Tower绑定的Watcher列表
+// RemoveWatcher 从指定地图像素坐标位置，以及Tower距离，移除范围内Tower绑定的Watcher列表
 func (m *Manager) RemoveWatcher(watcher *Watcher, position Coord, towerDistance int) {
     verifyWatcher(watcher)
     m.searchTowers(position, towerDistance, func(tower *Tower) {
@@ -137,7 +137,7 @@ func (m *Manager) RemoveWatcher(watcher *Watcher, position Coord, towerDistance 
     })
 }
 
-// ClearWatcher 清除指定Watcher全部绑定已绑定关系
+// ClearWatcher 清除指定Watcher与已绑定Tower的关系
 func (m *Manager) ClearWatcher(watcher *Watcher) {
     verifyWatcher(watcher)
     for tower := range watcher.watching {
@@ -146,8 +146,8 @@ func (m *Manager) ClearWatcher(watcher *Watcher) {
 }
 
 func (m *Manager) searchTowers(position Coord, dist int, onTower func(tower *Tower)) {
-    ip := m.convToTowerCoord(position)
-    start, end := m.coordRangeOf(ip, dist, m.max)
+    coord := m.convToTowerCoord(position)
+    start, end := m.coordRangeOf(coord, dist, m.max)
     for x := start.X; x <= end.X; x++ {
         for y := start.Y; y <= end.Y; y++ {
             onTower(m.towers[x][y])
