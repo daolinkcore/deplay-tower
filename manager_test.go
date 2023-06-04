@@ -14,7 +14,7 @@ func TestManagerEntity(t *testing.T) {
     })
     tw.Init()
 
-    TE11_ID := ID(11)
+    TE11_ID := ID("11")
     TE11 := &TestEntity{
         Entity:      &Entity{Id: TE11_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE11_ID),
@@ -26,7 +26,7 @@ func TestManagerEntity(t *testing.T) {
     assert.Equal(t, 0, TE11.enters)
     assert.Equal(t, 0, TE11.leaves)
 
-    TE22_ID := ID(22)
+    TE22_ID := ID("22")
     TE22 := &TestEntity{
         Entity:      &Entity{Id: TE22_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE22_ID),
@@ -42,7 +42,7 @@ func TestManagerEntity(t *testing.T) {
     assert.Equal(t, TE22.enters, TE11.enters)
     assert.Equal(t, TE22.leaves, TE11.leaves)
 
-    TE33_ID := ID(33)
+    TE33_ID := ID("33")
     TE33 := &TestEntity{
         Entity:      &Entity{Id: TE33_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE33_ID),
@@ -77,7 +77,7 @@ func TestManagerWatcher(t *testing.T) {
         Debug: true,
     })
     tw.Init()
-    TWMAP_ID := ID(99)
+    TWMAP_ID := ID("99")
     TWMAP := &TestWatcher{
         Watcher:     &Watcher{Id: TWMAP_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TWMAP_ID),
@@ -87,7 +87,7 @@ func TestManagerWatcher(t *testing.T) {
     log.Println("-> Watcher Add: ", TWMAP_ID)
     tw.AddWatcher(TWMAP.Setup(), TWMAPCoord, 10)
 
-    TWCenter_ID := ID(88)
+    TWCenter_ID := ID("88")
     TWCenter := &TestWatcher{
         Watcher:     &Watcher{Id: TWCenter_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TWCenter_ID),
@@ -97,7 +97,7 @@ func TestManagerWatcher(t *testing.T) {
     log.Println("-> Watcher Add: ", TWCenter_ID)
     tw.AddWatcher(TWCenter.Setup(), TWCenterCoord, 1)
 
-    TE11_ID := ID(11)
+    TE11_ID := ID("11")
     TE11 := &TestEntity{
         Entity:      &Entity{Id: TE11_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE11_ID),
@@ -109,7 +109,7 @@ func TestManagerWatcher(t *testing.T) {
     assert.Equal(t, 1, TWMAP.enters)
     assert.Equal(t, 0, TWCenter.enters)
 
-    TE22_ID := ID(22)
+    TE22_ID := ID("22")
     TE22 := &TestEntity{
         Entity:      &Entity{Id: TE22_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE22_ID),
@@ -121,7 +121,7 @@ func TestManagerWatcher(t *testing.T) {
     assert.Equal(t, 2, TWMAP.enters)
     assert.Equal(t, 0, TWCenter.enters)
 
-    TE33_ID := ID(33)
+    TE33_ID := ID("33")
     TE33 := &TestEntity{
         Entity:      &Entity{Id: TE33_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE33_ID),
@@ -141,7 +141,7 @@ func TestManagerWatcher(t *testing.T) {
     log.Println("-> Watcher Remove: ", TWMAP)
     tw.ClearWatcher(TWMAP.Watcher)
 
-    TE44_ID := ID(44)
+    TE44_ID := ID("44")
     TE44 := &TestEntity{
         Entity:      &Entity{Id: TE44_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE44_ID),
@@ -157,7 +157,7 @@ func TestManagerWatcher(t *testing.T) {
     assert.Equal(t, 1, TWMAP.leaves)
     assert.Equal(t, 2, TWCenter.leaves)
 
-    TE55_ID := ID(55)
+    TE55_ID := ID("55")
     TE55 := &TestEntity{
         Entity:      &Entity{Id: TE55_ID},
         onEnterFunc: newLogEnterFunc("Watcher", TE55_ID),
@@ -238,12 +238,12 @@ func (t *TestWatcher) OnWatchingLeave(other *Entity) {
 
 func newLogEnterFunc(kind string, id ID) func(entity *Entity) {
     return func(entity *Entity) {
-        log.Printf("=> %s[%d] receive ENTER, target: %+v\n", kind, id, entity)
+        log.Printf("=> %s[%s] receive ENTER, target: %+v\n", kind, id, entity)
     }
 }
 
 func newLogLeaveFunc(kind string, id ID) func(entity *Entity) {
     return func(entity *Entity) {
-        log.Printf("=> %s[%d] receive LEAVE, target: %+v\n", kind, id, entity)
+        log.Printf("=> %s[%s] receive LEAVE, target: %+v\n", kind, id, entity)
     }
 }

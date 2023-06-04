@@ -3,7 +3,7 @@ package tower
 import "log"
 
 type (
-    ID int64
+    ID string
 )
 
 type Entity struct {
