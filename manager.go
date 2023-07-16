@@ -95,21 +95,22 @@ func (m *Manager) Remove(entity *Entity) bool {
     return m.towers[coord.X][coord.Y].remove(entity)
 }
 
-// Update 将Entity从指定地图像素坐标位置移动到新的像素坐标位置。
+// Update 将Entity从移动到新的像素坐标位置。
 //
 // 此操作会触发OnEntityEnter和OnEntityLeave函数回调
 //
 // @return 仅当成功更新entity时返回True，否则返回False
-func (m *Manager) Update(entity *Entity, from, to Coord) bool {
+func (m *Manager) Update(entity *Entity, targetCoord Coord) bool {
     verifyEntity(entity)
-    if !m.check(from) || !m.check(to) {
-        log.Println("ERROR: Tower manager update entity, coord INVALID, from=", from, "to=", to, "entity=", entity)
+    if !m.check(targetCoord) {
+        log.Println("ERROR: Tower manager update entity, coord INVALID, target=", targetCoord, "entity=", entity)
         return false
     }
-    prevCoord := m.convToTowerCoord(from)
-    nextCoord := m.convToTowerCoord(to)
+    prevCoord := *entity.tower
+    nextCoord := m.convToTowerCoord(targetCoord)
+    // 检查是否合法
     if prevCoord.X > len(m.towers) || nextCoord.X > len(m.towers) {
-        log.Println("ERROR: Tower manager update entity, prev.position=", from, "prev.tower=", prevCoord, "next.positon=", to, "next.tower", nextCoord)
+        log.Println("ERROR: Tower manager update entity, prev.tower=", prevCoord, "next.tower", nextCoord)
         return false
     }
     // Tower坐标没有发生切换
@@ -120,6 +121,22 @@ func (m *Manager) Update(entity *Entity, from, to Coord) bool {
     m.towers[nextCoord.X][nextCoord.Y].add(entity)    // Next tower
     return true
 }
+
+// UpdateCoord 将Entity从指定地图像素坐标位置移动到新的像素坐标位置。
+//
+// 此操作会触发OnEntityEnter和OnEntityLeave函数回调
+//
+// @return 仅当成功更新entity时返回True，否则返回False
+//func (m *Manager) UpdateCoord(entity *Entity, from, to Coord) bool {
+//    verifyEntity(entity)
+//    if !m.check(from) || !m.check(to) {
+//        log.Println("ERROR: Tower manager update entity, coord INVALID, from=", from, "to=", to, "entity=", entity)
+//        return false
+//    }
+//    prevCoord := m.convToTowerCoord(from)
+//    nextCoord := m.convToTowerCoord(to)
+//    return m.update(entity, prevCoord, nextCoord)
+//}
 
 // AddWatcher 从指定地图像素坐标位置，以及Tower距离，将Watcher添加到范围内的Tower列表
 func (m *Manager) AddWatcher(watcher *Watcher, position Coord, towerDistance int) {

@@ -55,13 +55,13 @@ func TestManagerEntity(t *testing.T) {
     assert.Equal(t, 0, TE33.leaves)
     //
     log.Println("-> Entity Update: ", TE22_ID)
-    tw.Update(TE22.Setup(), TE22Coord, E33Coord)
+    tw.Update(TE22.Setup(), E33Coord)
     assert.Equal(t, 1, TE33.enters)
     assert.Equal(t, 1, TE22.leaves)
     assert.Equal(t, 1, TE11.leaves)
 
     log.Println("-> Entity Update: ", TE22_ID)
-    tw.Update(TE22.Setup(), E33Coord, TE11Coord)
+    tw.Update(TE22.Setup(), TE11Coord)
     assert.Equal(t, 1, TE33.leaves)
     assert.Equal(t, 2, TE11.enters)
 

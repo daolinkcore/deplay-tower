@@ -1,6 +1,9 @@
 package tower
 
-import "log"
+import (
+    "log"
+    "sync"
+)
 
 type (
     ID string
@@ -48,6 +51,7 @@ type Tower struct {
     coord    ICoord // Tower坐标
     entities map[ID]*Entity
     watchers map[ID]*Watcher
+    mutex    sync.RWMutex
 }
 
 func NewTower(coord ICoord, debug bool) *Tower {
@@ -56,10 +60,13 @@ func NewTower(coord ICoord, debug bool) *Tower {
         debug:    debug,
         entities: make(map[ID]*Entity),
         watchers: make(map[ID]*Watcher),
+        mutex:    sync.RWMutex{},
     }
 }
 
 func (t *Tower) add(entity *Entity) bool {
+    t.mutex.Lock()
+    defer t.mutex.Unlock()
     if _, ok := t.entities[entity.Id]; ok {
         return false
     }
@@ -82,6 +89,8 @@ func (t *Tower) add(entity *Entity) bool {
 }
 
 func (t *Tower) remove(entity *Entity) bool {
+    t.mutex.Lock()
+    defer t.mutex.Unlock()
     if _, ok := t.entities[entity.Id]; !ok {
         return false
     }
@@ -98,6 +107,8 @@ func (t *Tower) remove(entity *Entity) bool {
 }
 
 func (t *Tower) addWatcher(watcher *Watcher) {
+    t.mutex.Lock()
+    defer t.mutex.Unlock()
     if _, ok := t.watchers[watcher.Id]; ok {
         return
     }
@@ -112,6 +123,8 @@ func (t *Tower) addWatcher(watcher *Watcher) {
 }
 
 func (t *Tower) removeWatcher(watcher *Watcher) {
+    t.mutex.Lock()
+    defer t.mutex.Unlock()
     if _, ok := t.watchers[watcher.Id]; !ok {
         return
     }
